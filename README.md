@@ -18,7 +18,7 @@ This project is not production-ready yet. It is suitable for private alpha testi
 
 Current alpha limitations:
 
-- The agent runs in the foreground with `remote-cli run`; service/autostart is documented but not implemented as a CLI helper yet.
+- The agent runs in the foreground with `remote-cli run`, or as a background service via `remote-cli service install`.
 - Claude Code must already be installed and authenticated on every agent machine.
 - Tool-use cards are currently observational; phone approval/deny is not a supported permission path yet.
 - The relay sees plaintext messages. There is no end-to-end encryption in v1.
@@ -62,23 +62,35 @@ Open `http://YOUR_LAN_IP:8080` on your phone.
 
 Important: `localhost` usually does not work for multi-device setups. Use a LAN IP, Tailscale hostname, or public HTTPS domain that your phone and every agent machine can reach. See [docs/choosing-relay-url.md](docs/choosing-relay-url.md).
 
-### 2. Install or build the agent
+### 2. Install the agent
 
-Until the first public release binaries exist, build from source:
+Download the latest binary for your platform from [Releases](https://github.com/akshaymemane/remote-cli/releases/latest):
+
+```bash
+# macOS Apple Silicon
+curl -Lo remote-cli https://github.com/akshaymemane/remote-cli/releases/latest/download/remote-cli-agent-darwin-arm64
+chmod +x remote-cli && sudo mv remote-cli /usr/local/bin/
+
+# macOS Intel
+curl -Lo remote-cli https://github.com/akshaymemane/remote-cli/releases/latest/download/remote-cli-agent-darwin-amd64
+chmod +x remote-cli && sudo mv remote-cli /usr/local/bin/
+
+# Linux amd64
+curl -Lo remote-cli https://github.com/akshaymemane/remote-cli/releases/latest/download/remote-cli-agent-linux-amd64
+chmod +x remote-cli && sudo mv remote-cli /usr/local/bin/
+
+# Linux arm64 (Raspberry Pi etc.)
+curl -Lo remote-cli https://github.com/akshaymemane/remote-cli/releases/latest/download/remote-cli-agent-linux-arm64
+chmod +x remote-cli && sudo mv remote-cli /usr/local/bin/
+```
+
+Or build from source (requires Go 1.23+):
 
 ```bash
 go build -o remote-cli ./cmd/agent
-chmod +x remote-cli
 ```
 
-Move it somewhere on your `PATH` if desired:
-
-```bash
-mkdir -p ~/.local/bin
-mv remote-cli ~/.local/bin/
-```
-
-Release binaries will be published from tagged releases once the project is ready for public alpha. See [docs/agent-install.md](docs/agent-install.md).
+See [docs/agent-install.md](docs/agent-install.md).
 
 ### 3. Pair each machine
 

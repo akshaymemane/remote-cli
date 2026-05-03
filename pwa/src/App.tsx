@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LoginScreen } from './components/LoginScreen';
 import { DeviceList } from './components/DeviceList';
 import { ChatView } from './components/ChatView';
@@ -24,6 +24,18 @@ export default function App() {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem('relay_token')
   );
+  const [theme, setTheme] = useState<'dark' | 'light'>(
+    () => (localStorage.getItem('theme') as 'dark' | 'light') ?? 'dark'
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme(t => t === 'dark' ? 'light' : 'dark');
+  }
   const [screen, setScreen] = useState<Screen>('devices');
   const [pendingPairCode, setPendingPairCode] = useState<string | null>(readPairCode);
   // Auto-open pair dialog if a code arrived via QR and the user is already logged in.
@@ -72,6 +84,8 @@ export default function App() {
           onSelect={openDevice}
           onAddDevice={() => setShowPair(true)}
           onDevicesChanged={refreshDevices}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       ) : (
         <ChatView

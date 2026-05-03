@@ -8,9 +8,11 @@ interface Props {
   onSelect: (deviceId: string) => void;
   onAddDevice: () => void;
   onDevicesChanged: () => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
-export function DeviceList({ devices, token, relayUrl, onSelect, onAddDevice, onDevicesChanged }: Props) {
+export function DeviceList({ devices, token, relayUrl, onSelect, onAddDevice, onDevicesChanged, theme, onToggleTheme }: Props) {
   const [actionDevice, setActionDevice] = useState<Device | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState('');
@@ -74,6 +76,9 @@ export function DeviceList({ devices, token, relayUrl, onSelect, onAddDevice, on
     <div className="device-list">
       <header className="topbar">
         <h2>Devices</h2>
+        <button className="icon-btn" onClick={onToggleTheme} title="Toggle theme">
+          {theme === 'dark' ? '☀' : '🌙'}
+        </button>
         <button className="icon-btn" onClick={onAddDevice} title="Add device">＋</button>
       </header>
 

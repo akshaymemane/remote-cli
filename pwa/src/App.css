@@ -20,6 +20,15 @@
   background: var(--bg);
 }
 
+[data-theme="light"] {
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --surface2: #e8e8eb;
+  --border: #d4d4d8;
+  --text: #18181b;
+  --text2: #71717a;
+}
+
 html, body, #root { height: 100%; overflow: hidden; }
 
 /* ── Shared ──────────────────────────────────────────────────────────────────── */

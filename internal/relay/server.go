@@ -455,7 +455,7 @@ func (s *Server) handlePairRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pairURL := fmt.Sprintf("%s/pair/%s", strings.TrimRight(s.relayURL, "/"), code)
+	pairURL := fmt.Sprintf("%s/?pair=%s", strings.TrimRight(s.relayURL, "/"), code)
 	c.push(protocol.PairCodeMsg{Type: protocol.TypePairCode, Code: code, URL: pairURL})
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -3,14 +3,15 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 interface Props {
   token: string;
+  initialCode?: string;
   onPaired: () => void;
   onClose: () => void;
 }
 
 const RELAY_URL = import.meta.env.VITE_RELAY_URL ?? window.location.origin;
 
-export function PairDialog({ token, onPaired, onClose }: Props) {
-  const [code, setCode] = useState('');
+export function PairDialog({ token, initialCode, onPaired, onClose }: Props) {
+  const [code, setCode] = useState(initialCode ?? '');
   const [deviceName, setDeviceName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,8 +55,8 @@ export function PairDialog({ token, onPaired, onClose }: Props) {
       { facingMode: 'environment' },
       { fps: 10, qrbox: 250 },
       (decodedText) => {
-        // URL form: https://relay/pair/CODE
-        const match = decodedText.match(/\/pair\/(\d{6})$/);
+        // URL form: https://relay/?pair=CODE
+        const match = decodedText.match(/[?&]pair=(\d{6})/);
         if (match) {
           scanner.stop().catch(() => {});
           setScanning(false);
@@ -94,6 +95,7 @@ export function PairDialog({ token, onPaired, onClose }: Props) {
           value={deviceName}
           onChange={e => setDeviceName(e.target.value)}
           maxLength={40}
+          autoFocus={!!initialCode}
         />
 
         {!scanning ? (

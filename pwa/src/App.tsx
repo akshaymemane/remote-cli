@@ -10,12 +10,24 @@ const RELAY_URL = (import.meta.env.VITE_RELAY_URL as string | undefined) ?? wind
 
 type Screen = 'devices' | 'chat';
 
+function readPairCode(): string | null {
+  const code = new URLSearchParams(window.location.search).get('pair');
+  if (code && /^\d{6}$/.test(code)) {
+    // Remove ?pair= from the URL bar without reloading.
+    window.history.replaceState({}, '', window.location.pathname);
+    return code;
+  }
+  return null;
+}
+
 export default function App() {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem('relay_token')
   );
   const [screen, setScreen] = useState<Screen>('devices');
-  const [showPair, setShowPair] = useState(false);
+  const [pendingPairCode, setPendingPairCode] = useState<string | null>(readPairCode);
+  // Auto-open pair dialog if a code arrived via QR and the user is already logged in.
+  const [showPair, setShowPair] = useState(() => !!(localStorage.getItem('relay_token') && pendingPairCode));
 
   const relay = useRelay(token);
 
@@ -39,7 +51,7 @@ export default function App() {
   }
 
   if (!token) {
-    return <LoginScreen onLogin={t => setToken(t)} />;
+    return <LoginScreen onLogin={t => { setToken(t); if (pendingPairCode) setShowPair(true); }} />;
   }
 
   const activeDevice = relay.devices.find(d => d.id === relay.activeDeviceId);
@@ -76,11 +88,16 @@ export default function App() {
       {showPair && (
         <PairDialog
           token={token}
+          initialCode={pendingPairCode ?? undefined}
           onPaired={() => {
             setShowPair(false);
+            setPendingPairCode(null);
             refreshDevices();
           }}
-          onClose={() => setShowPair(false)}
+          onClose={() => {
+            setShowPair(false);
+            setPendingPairCode(null);
+          }}
         />
       )}
 

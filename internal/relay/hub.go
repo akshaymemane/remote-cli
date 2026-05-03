@@ -61,6 +61,7 @@ type Hub struct {
 	mu           sync.RWMutex
 	conns        map[string]*conn   // connID → conn
 	byDevice     map[string]*conn   // deviceID → agent conn
+	busyDevices  map[string]struct{} // deviceID set — device has an active session
 	sessions     map[string]string  // sessionID → deviceID
 	sessionOwner map[string]string  // sessionID → phone connID
 	toolSessions map[string]string  // toolUseID → sessionID
@@ -70,6 +71,7 @@ func NewHub() *Hub {
 	return &Hub{
 		conns:        make(map[string]*conn),
 		byDevice:     make(map[string]*conn),
+		busyDevices:  make(map[string]struct{}),
 		sessions:     make(map[string]string),
 		sessionOwner: make(map[string]string),
 		toolSessions: make(map[string]string),
@@ -175,15 +177,44 @@ func (h *Hub) disconnectDevice(deviceID string) {
 	}
 }
 
-// agentStatus returns "online" if a registered agent conn exists for deviceID.
+// agentStatus returns "offline", "online", or "busy" for deviceID.
 func (h *Hub) agentStatus(deviceID string) string {
 	h.mu.RLock()
-	_, ok := h.byDevice[deviceID]
+	_, online := h.byDevice[deviceID]
+	_, busy := h.busyDevices[deviceID]
 	h.mu.RUnlock()
-	if ok {
-		return "online"
+	if !online {
+		return "offline"
 	}
-	return "offline"
+	if busy {
+		return "busy"
+	}
+	return "online"
+}
+
+func (h *Hub) setDeviceBusy(deviceID string) {
+	h.mu.Lock()
+	h.busyDevices[deviceID] = struct{}{}
+	h.mu.Unlock()
+}
+
+func (h *Hub) setDeviceIdle(deviceID string) {
+	h.mu.Lock()
+	delete(h.busyDevices, deviceID)
+	h.mu.Unlock()
+}
+
+// sessionsForOwner returns all session IDs owned by a phone connection.
+func (h *Hub) sessionsForOwner(connID string) []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	var ids []string
+	for sid, ownerID := range h.sessionOwner {
+		if ownerID == connID {
+			ids = append(ids, sid)
+		}
+	}
+	return ids
 }
 
 // ── Session tracking ──────────────────────────────────────────────────────────

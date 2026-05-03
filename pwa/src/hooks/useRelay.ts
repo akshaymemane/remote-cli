@@ -193,16 +193,8 @@ export function useRelay(token: string | null) {
     send({ type: 'message.user', session_id: sessionId, content });
   }, [send, sessionId]);
 
-  const approveTool = useCallback((toolUseId: string) => {
-    send({ type: 'tool_use.approve', tool_use_id: toolUseId });
-  }, [send]);
-
-  const denyTool = useCallback((toolUseId: string) => {
-    send({ type: 'tool_use.deny', tool_use_id: toolUseId, reason: 'user denied' });
-  }, [send]);
-
   return {
     wsStatus, devices, activeDeviceId, sessionId, messages,
-    startSession, endSession, sendMessage, approveTool, denyTool, send,
+    startSession, endSession, sendMessage, send,
   };
 }

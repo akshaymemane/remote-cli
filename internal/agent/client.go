@@ -131,10 +131,6 @@ func handleRelayMsg(mgr *sessionMgr, raw []byte) {
 			mgr.deliver(msg.SessionID, msg.Content)
 		}
 
-	case protocol.TypeToolUseApprove, protocol.TypeToolUseDeny:
-		// Phase 3: forward to active SDK session
-		log.Printf("tool_use decision received (phase 3): %s", env.Type)
-
 	default:
 		log.Printf("relay → agent: %s", env.Type)
 	}

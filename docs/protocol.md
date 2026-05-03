@@ -22,7 +22,8 @@ Agent connections receive `connected` first, then either request pairing or send
 | `POST` | `/api/auth/login` | Exchange admin password for JWT. |
 | `POST` | `/api/pair/request` | Agent requests a pairing code. |
 | `POST` | `/api/pair/redeem` | Authenticated phone redeems a pairing code. |
-| `GET` | `/api/debug/devices` | Development/debug device listing. |
+| `PATCH` | `/api/devices/{id}` | Rename a device (requires JWT). |
+| `DELETE` | `/api/devices/{id}` | Delete and disconnect a device (requires JWT). |
 
 ## Pairing Messages
 
@@ -45,7 +46,7 @@ Relay to pairing agent.
 {
   "type": "pair.code",
   "code": "123456",
-  "url": "http://relay/pair/123456"
+  "url": "http://relay/?pair=123456"
 }
 ```
 

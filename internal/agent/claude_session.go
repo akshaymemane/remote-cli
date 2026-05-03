@@ -76,6 +76,15 @@ func (s *claudeSession) pushError(code, message string) {
 func (s *claudeSession) run() {
 	defer close(s.stopped)
 
+	reason := "spawn_failed"
+	defer func() {
+		s.push(protocol.SessionEndedMsg{
+			Type:      protocol.TypeSessionEnded,
+			SessionID: s.id,
+			Reason:    reason,
+		})
+	}()
+
 	cmd := exec.Command("claude",
 		"--print",
 		"--input-format", "stream-json",
@@ -105,6 +114,13 @@ func (s *claudeSession) run() {
 		s.pushError("spawn_failed", fmt.Sprintf("start: %v", err))
 		return
 	}
+
+	reason = "session ended"
+	defer func() {
+		stdin.Close()
+		cmd.Process.Kill()
+		cmd.Wait() //nolint — exit code irrelevant
+	}()
 
 	log.Printf("session %s: claude pid %d started", s.id, cmd.Process.Pid)
 
@@ -140,18 +156,6 @@ func (s *claudeSession) run() {
 	lastText := make(map[string]string)
 	// thinking tracks whether we're awaiting a claude result (don't send more msgs).
 	thinking := false
-
-	reason := "session ended"
-	defer func() {
-		stdin.Close()
-		cmd.Process.Kill()
-		cmd.Wait() //nolint — we don't care about exit code
-		s.push(protocol.SessionEndedMsg{
-			Type:      protocol.TypeSessionEnded,
-			SessionID: s.id,
-			Reason:    reason,
-		})
-	}()
 
 	for {
 		select {
@@ -206,11 +210,11 @@ func (s *claudeSession) handleEvent(ev stdoutEvent, lastText map[string]string, 
 			switch block.Type {
 			case "text":
 				prev := lastText[ev.MsgID]
-				delta := block.Text[len(prev):]
-				lastText[ev.MsgID] = block.Text
-				if delta == "" {
+				if len(block.Text) <= len(prev) {
 					continue
 				}
+				delta := block.Text[len(prev):]
+				lastText[ev.MsgID] = block.Text
 				log.Printf("session %s: chunk %q", s.id, delta)
 				s.push(protocol.AssistantChunkMsg{
 					Type:         protocol.TypeAssistantChunk,

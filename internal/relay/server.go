@@ -99,6 +99,7 @@ func (s *Server) handleAgentWS(w http.ResponseWriter, r *http.Request) {
 				})
 				s.hub.unregisterSession(sid)
 			}
+			s.hub.setDeviceIdle(c.deviceID)
 			if err := s.db.UpdateDeviceLastSeen(c.deviceID); err != nil {
 				log.Printf("update last_seen %s: %v", c.deviceID, err)
 			}
@@ -183,8 +184,9 @@ func (s *Server) routeAgentMessage(msgType protocol.MessageType, raw []byte) {
 		deviceID := s.hub.deviceForSession(msg.SessionID)
 		s.hub.sendToSessionOwner(msg.SessionID, msg) // send before unregister clears owner
 		s.hub.unregisterSession(msg.SessionID)
+		s.hub.setDeviceIdle(deviceID)
 		// Device is idle again if the agent is still connected.
-		if deviceID != "" && s.hub.agentStatus(deviceID) == "online" {
+		if deviceID != "" && s.hub.agentStatus(deviceID) != "offline" {
 			s.broadcastDeviceUpdate(deviceID, "online")
 		}
 
@@ -222,6 +224,18 @@ func (s *Server) handlePhoneWS(w http.ResponseWriter, r *http.Request) {
 	go c.writePump()
 
 	defer func() {
+		if c.kind == kindPhone {
+			for _, sid := range s.hub.sessionsForOwner(c.id) {
+				deviceID := s.hub.deviceForSession(sid)
+				if deviceID != "" {
+					s.hub.sendToDevice(deviceID, protocol.RelaySessionEndMsg{
+						Type:      protocol.TypeSessionEnd,
+						SessionID: sid,
+						Reason:    "phone disconnected",
+					})
+				}
+			}
+		}
 		s.hub.unregister(c)
 		close(c.send)
 	}()
@@ -278,11 +292,19 @@ func (s *Server) routePhoneMessage(c *conn, msgType protocol.MessageType, raw []
 		if json.Unmarshal(raw, &msg) != nil || msg.DeviceID == "" {
 			return
 		}
-		if s.hub.agentStatus(msg.DeviceID) == "offline" {
+		switch s.hub.agentStatus(msg.DeviceID) {
+		case "offline":
 			c.push(protocol.ErrorMsg{
 				Type:    protocol.TypeError,
 				Code:    "device_offline",
 				Message: "Device is offline — run 'remote-cli run' on the machine first.",
+			})
+			return
+		case "busy":
+			c.push(protocol.ErrorMsg{
+				Type:    protocol.TypeError,
+				Code:    "device_busy",
+				Message: "Device already has an active session.",
 			})
 			return
 		}
@@ -301,6 +323,7 @@ func (s *Server) routePhoneMessage(c *conn, msgType protocol.MessageType, raw []
 			return
 		}
 		s.hub.registerSessionOwner(sessionID, c.id)
+		s.hub.setDeviceBusy(msg.DeviceID)
 		s.broadcastDeviceUpdate(msg.DeviceID, "busy")
 		// Let the phone know the session ID it was assigned.
 		c.push(protocol.SessionStateMsg{
@@ -339,7 +362,9 @@ func (s *Server) routePhoneMessage(c *conn, msgType protocol.MessageType, raw []
 			c.push(protocol.ErrorMsg{Type: protocol.TypeError, Code: "not_found", Message: "session not found"})
 			return
 		}
-		s.hub.sendToDevice(deviceID, msg)
+		if !s.hub.sendToDevice(deviceID, msg) {
+			c.push(protocol.ErrorMsg{Type: protocol.TypeError, Code: "device_unreachable", Message: "Could not deliver message to device."})
+		}
 
 	case protocol.TypeToolUseApprove:
 		var msg protocol.ToolUseApproveMsg

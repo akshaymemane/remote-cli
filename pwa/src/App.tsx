@@ -79,6 +79,7 @@ export default function App() {
           sessionId={relay.sessionId}
           wsConnected={relay.wsStatus === 'connected'}
           messages={relay.messages}
+          thinking={relay.thinking}
           onSend={relay.sendMessage}
           onBack={handleBack}
           onEndSession={handleBack}

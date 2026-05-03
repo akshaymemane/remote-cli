@@ -24,6 +24,7 @@ export function useRelay(token: string | null) {
   const [activeDeviceId, setActiveDeviceId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [thinking, setThinking] = useState(false);
   const streamingIdRef = useRef<string | null>(null);
 
   const send = useCallback((msg: RelayMsg) => {
@@ -65,6 +66,7 @@ export function useRelay(token: string | null) {
       case 'session.started':
         break;
       case 'session.ended': {
+        setThinking(false);
         setSessionId(null);
         streamingIdRef.current = null;
         const m = cast<{ reason: string }>(msg);
@@ -75,6 +77,7 @@ export function useRelay(token: string | null) {
         break;
       }
       case 'message.assistant_chunk': {
+        setThinking(false);
         const m = cast<{ content_block: { text: string } }>(msg);
         const text = m.content_block?.text ?? '';
         if (!text) break;
@@ -123,6 +126,7 @@ export function useRelay(token: string | null) {
         break;
       }
       case 'error': {
+        setThinking(false);
         const m = cast<{ message: string }>(msg);
         setMessages(prev => [
           ...prev,
@@ -171,6 +175,7 @@ export function useRelay(token: string | null) {
   const startSession = useCallback((deviceId: string) => {
     setActiveDeviceId(deviceId);
     setMessages([]);
+    setThinking(false);
     streamingIdRef.current = null;
     send({ type: 'session.start', device_id: deviceId });
   }, [send]);
@@ -182,19 +187,21 @@ export function useRelay(token: string | null) {
     setSessionId(null);
     setActiveDeviceId(null);
     setMessages([]);
+    setThinking(false);
     streamingIdRef.current = null;
   }, [send, sessionId, activeDeviceId]);
 
   const sendMessage = useCallback((content: string) => {
     if (!sessionId) return;
     const id = uuid();
-    streamingIdRef.current = null; // new user turn → next assistant chunk starts fresh bubble
+    streamingIdRef.current = null;
+    setThinking(true);
     setMessages(prev => [...prev, { id, role: 'user', text: content }]);
     send({ type: 'message.user', session_id: sessionId, content });
   }, [send, sessionId]);
 
   return {
-    wsStatus, devices, activeDeviceId, sessionId, messages,
+    wsStatus, devices, activeDeviceId, sessionId, messages, thinking,
     startSession, endSession, sendMessage, send,
   };
 }

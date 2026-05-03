@@ -39,6 +39,7 @@ logs/
 
 # Local Claude/Codex state
 /.claude/
+/codex/
 
 # Local Go caches / coverage
 /.gocache/

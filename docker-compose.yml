@@ -1,0 +1,18 @@
+services:
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile.relay
+    ports:
+      - "8080:8080"
+    volumes:
+      - relay-data:/app/data
+    environment:
+      RELAY_DB: /app/data/relay.db
+      RELAY_JWT_SECRET: ${RELAY_JWT_SECRET:?Set RELAY_JWT_SECRET in .env (run: openssl rand -hex 32)}
+      RELAY_URL: ${RELAY_URL:-http://localhost:8080}
+      RELAY_ADMIN_PASSWORD: ${RELAY_ADMIN_PASSWORD:?Set RELAY_ADMIN_PASSWORD in .env}
+    restart: unless-stopped
+
+volumes:
+  relay-data:

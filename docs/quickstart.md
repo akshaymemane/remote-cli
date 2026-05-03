@@ -80,9 +80,21 @@ http://192.168.1.10:8080
 
 Sign in with `RELAY_ADMIN_PASSWORD`.
 
-## 3. Build Or Install The Agent
+## 3. Install Or Build The Agent
 
-Until public release binaries exist, build from source:
+Download the latest binary for your platform from GitHub Releases when one is available:
+
+```bash
+# macOS Apple Silicon
+curl -Lo remote-cli https://github.com/akshaymemane/remote-cli/releases/latest/download/remote-cli-agent-darwin-arm64
+chmod +x remote-cli
+
+# Linux arm64, for example Raspberry Pi
+curl -Lo remote-cli https://github.com/akshaymemane/remote-cli/releases/latest/download/remote-cli-agent-linux-arm64
+chmod +x remote-cli
+```
+
+Or build from source:
 
 ```bash
 go build -o remote-cli ./cmd/agent
@@ -145,6 +157,13 @@ remote-cli run
 Keep this process running.
 
 The PWA should show the device online.
+
+To keep the agent online in the background on macOS or Linux:
+
+```bash
+remote-cli service install
+remote-cli service logs
+```
 
 ## 7. Start A Session
 

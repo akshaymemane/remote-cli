@@ -2,7 +2,7 @@
 
 The relay is the central server. Phones and agents connect to it over HTTP/WebSocket.
 
-For alpha, Docker Compose is the recommended deployment path.
+Docker Compose is the recommended deployment path for self-hosted beta users.
 
 ## Responsibilities
 
@@ -153,4 +153,4 @@ Before public exposure:
 - use a strong admin password
 - protect the SQLite volume
 - avoid running on a laptop that sleeps
-- prefer Tailscale/private network for alpha
+- prefer Tailscale or a private network while the project is still early

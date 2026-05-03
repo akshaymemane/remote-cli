@@ -1,6 +1,6 @@
 # remote-cli
 
-> **Alpha**: self-hosted, early, and intended for technical users comfortable running a relay and an agent process.
+> **Beta candidate**: self-hosted, early, and intended for technical users comfortable running a relay and an agent process.
 
 remote-cli is a self-hosted mobile control plane for Claude Code sessions across your machines.
 
@@ -14,13 +14,13 @@ The relay is the hub. Agents and phones connect outbound to the relay, so your a
 
 ## Status
 
-This project is not production-ready yet. It is suitable for private alpha testing and dogfooding.
+This project is not production-ready yet. It is suitable for self-hosted beta testing and dogfooding.
 
-Current alpha limitations:
+Current limitations:
 
-- The agent runs in the foreground with `remote-cli run`, or as a background service via `remote-cli service install`.
 - Claude Code must already be installed and authenticated on every agent machine.
-- Tool-use cards are currently observational; phone approval/deny is not a supported permission path yet.
+- The agent must be running with `remote-cli run` or installed as a background service with `remote-cli service install`.
+- Tool-use cards are currently observational in the PWA; phone approval/deny is not a supported permission boundary yet.
 - The relay sees plaintext messages. There is no end-to-end encryption in v1.
 - Chat history is not persisted across reloads/restarts yet.
 
@@ -113,6 +113,15 @@ remote-cli run
 ```
 
 Keep that process running. The device should appear online in the PWA.
+
+For background startup on macOS or Linux:
+
+```bash
+remote-cli service install
+remote-cli service logs
+```
+
+See [docs/service-autostart.md](docs/service-autostart.md).
 
 ## Requirements
 

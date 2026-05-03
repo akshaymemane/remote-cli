@@ -89,7 +89,19 @@ session <id>: turn complete
 session <id>: claude stderr: ...
 ```
 
-If no session logs appear after tapping a device, the relay may not be routing to an active agent connection.
+If no session logs appear after tapping a device, check the PWA for an error such as `device_offline`, `device_busy`, or `device_unreachable`.
+
+## Device Shows Busy
+
+The relay marks a device busy while it has an active session.
+
+Normal fixes:
+
+- end the active session from the PWA
+- wait for the agent to send `session.ended`
+- restart `remote-cli run` if the local Claude process got stuck
+
+If the phone disconnects, the relay asks each affected device to end the owned session. The device should become online again after the agent sends `session.ended`.
 
 ## Agent Online, Then Suddenly Offline
 
@@ -122,6 +134,8 @@ On the agent machine:
 remote-cli status
 remote-cli run
 ```
+
+If the PWA reports `device_unreachable`, the relay had the device in memory but could not deliver the message. This usually means the agent disconnected at the same moment. Restart the agent and try again.
 
 Check the stored relay URL:
 
@@ -202,6 +216,8 @@ On the agent machine:
 remote-cli unpair
 remote-cli pair --relay <relay-url>
 ```
+
+This resets the local agent credential. To remove the relay-side device record, delete the device from the PWA.
 
 ## Reset Relay State
 

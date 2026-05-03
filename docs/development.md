@@ -78,6 +78,12 @@ Run:
 go run ./cmd/agent run
 ```
 
+Run after pairing:
+
+```bash
+go run ./cmd/agent pair --relay http://localhost:8080 --run
+```
+
 Status:
 
 ```bash
@@ -88,6 +94,13 @@ Unpair:
 
 ```bash
 go run ./cmd/agent unpair
+```
+
+Service helpers are available in built binaries on macOS and Linux:
+
+```bash
+remote-cli service install
+remote-cli service logs
 ```
 
 ## Tests And Builds

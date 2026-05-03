@@ -120,7 +120,7 @@ Relay to pairing agent.
 }
 ```
 
-Current alpha note: approve/deny messages exist in the protocol, but phone approval is not a supported end-to-end permission path yet.
+Current note: approve/deny message types exist in the relay protocol, but the PWA does not expose phone-side approval as a supported permission boundary yet.
 
 ### `tool_use.deny`
 
@@ -131,6 +131,16 @@ Current alpha note: approve/deny messages exist in the protocol, but phone appro
   "reason": "..."
 }
 ```
+
+## Device Status Values
+
+Device status values currently used by the relay:
+
+| Status | Meaning |
+| --- | --- |
+| `offline` | No active agent WebSocket is registered for the device. |
+| `online` | The agent is connected and ready for a session. |
+| `busy` | The agent has an active session and cannot start another one yet. |
 
 ## Agent To Relay
 
@@ -239,6 +249,18 @@ Current alpha note: approve/deny messages exist in the protocol, but phone appro
 }
 ```
 
+Common relay error codes:
+
+| Code | Meaning |
+| --- | --- |
+| `auth_required` | Phone sent a message before `client.auth`. |
+| `auth_failed` | JWT or device token authentication failed. |
+| `device_offline` | Session start was requested for an offline device. |
+| `device_busy` | Session start was requested for a device with an active session. |
+| `device_unreachable` | The relay could not deliver a session or message to the agent. |
+| `not_found` | The session no longer exists in relay memory. |
+| `spawn_failed` | The agent could not start Claude Code or set up the Claude subprocess. |
+
 ### `device.update`
 
 ```json
@@ -270,8 +292,7 @@ Relay sends:
 - `session.start`
 - `session.end`
 - `message.user`
-- `tool_use.approve`
-- `tool_use.deny`
+- `tool_use.approve` and `tool_use.deny`, when a future or custom client uses those protocol messages
 
 ## Versioning
 

@@ -62,7 +62,7 @@ openssl rand -hex 32
    - Use `RELAY_ADMIN_PASSWORD` for non-interactive Docker setup or the first-run prompt for local source runs.
 
 4. Use a trusted network.
-   - For early alpha, Tailscale or a private LAN is safer than a public IP.
+   - Tailscale or a private LAN is safer than a public IP while the project is still early.
 
 5. Protect the SQLite database.
    - It contains the admin password hash, device token hashes, device names, and last-seen data.
@@ -70,14 +70,13 @@ openssl rand -hex 32
 6. Keep the agent config private.
    - The local config contains the plaintext device token.
 
-## Current Alpha Limitations
+## Current Security Limitations
 
 - No end-to-end encryption.
-- No device revoke/delete command yet.
 - No per-device permission policy.
 - No multi-user/team auth model.
 - No server-side JWT revocation.
-- Tool approval from the phone is not a supported permission path yet.
+- Phone-side tool approval is not a supported security boundary yet. Claude Code permissions are controlled by Claude Code on the agent machine.
 
 ## Reporting Vulnerabilities
 
@@ -97,4 +96,4 @@ Do not open a public GitHub issue for vulnerabilities.
 
 ## Supported Versions
 
-This project is alpha. Only the latest `main` branch and latest tagged alpha release, once releases exist, are considered supported.
+This project is early and self-hosted. Only the latest `master` branch and latest tagged release are considered supported.

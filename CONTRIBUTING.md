@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for considering a contribution. remote-cli is early alpha, so the highest-impact work right now is making the core user journey reliable and understandable.
+Thanks for considering a contribution. remote-cli is an early beta-candidate project, so the highest-impact work right now is making the core user journey reliable and understandable.
 
 ## Project Status
 
@@ -11,13 +11,13 @@ Current shape:
 - Agents connect outbound to the relay.
 - The agent can spawn Claude Code using stream-json mode.
 - The PWA has login, device list, pairing, and chat views.
+- Basic macOS launchd and Linux systemd user-service helpers exist for the agent.
 
-Known alpha gaps:
+Known gaps:
 
-- The agent runs in the foreground; service helpers are not implemented yet.
-- Phone-side tool approval is not implemented end-to-end.
+- Phone-side tool approval is not a supported permission boundary yet.
 - Chat history is not persisted yet.
-- Some failure cases still need clearer errors.
+- Some failure cases still need real-world testing across networks, browsers, and Claude Code states.
 
 ## Repository Layout
 

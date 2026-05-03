@@ -32,7 +32,7 @@ It handles:
 - JWT validation
 - pairing codes
 - device registry
-- online/offline presence
+- offline/online/busy presence
 - session routing
 - SQLite persistence
 - serving the PWA
@@ -49,7 +49,9 @@ In-memory state:
 - active phone connections
 - active agent connections
 - session-to-device mappings
+- session-to-phone-owner mappings
 - tool-use-to-session mappings
+- busy device IDs
 - pairing codes
 
 ## Agent
@@ -60,9 +62,15 @@ Commands:
 
 ```bash
 remote-cli pair --relay <url>
+remote-cli pair --relay <url> --run
 remote-cli run
 remote-cli status
 remote-cli unpair
+remote-cli service install
+remote-cli service uninstall
+remote-cli service start
+remote-cli service stop
+remote-cli service logs
 ```
 
 The agent stores config at:
@@ -118,8 +126,10 @@ Pairing codes:
 
 ```text
 PWA -> Relay: session.start(device_id)
+Relay: reject if device is offline or busy
 Relay: create session_id
 Relay: map session_id -> device_id
+Relay: mark device busy
 Relay -> Agent: session.start(session_id)
 Agent: spawn claude
 Agent -> Relay -> PWA: session.started
@@ -128,6 +138,8 @@ Agent -> Claude: stdin stream-json message
 Claude -> Agent: stdout stream-json events
 Agent -> Relay -> PWA: message.assistant_chunk
 ```
+
+When the session ends, the relay removes the session mapping, marks the device online if the agent is still connected, and forwards `session.ended` to the phone.
 
 ## Multi-Device Routing
 
@@ -169,8 +181,9 @@ Phone disconnect:
 Agent disconnect:
 
 - relay marks device offline
-- active session may end
+- active sessions for that device are ended
 - agent reconnects when `remote-cli run` is still active
+- if the agent is installed as a service, the service manager restarts it after failures
 
 Relay restart:
 
@@ -182,5 +195,5 @@ Relay restart:
 - No persisted chat history.
 - No end-to-end encryption.
 - One active session per agent.
-- Tool approvals are not applied end-to-end yet.
-- Agent service management is not built in yet.
+- Phone-side tool approval is not a supported permission boundary yet.
+- No `remote-cli service status` command yet.

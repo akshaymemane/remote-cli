@@ -1,88 +1,127 @@
 # Service And Autostart
 
-Alpha status: remote-cli does not yet include service management commands.
+Pairing saves credentials, but the device only appears online while the agent process is connected to the relay.
 
-For now, the supported path is:
+For quick manual testing, run:
 
 ```bash
 remote-cli run
 ```
 
-Keep that process running for the device to stay online.
+Keep that process running for the device to stay online. For day-to-day use, install the background service.
 
-## Why Autostart Matters
-
-Pairing saves credentials, but the device only appears online while the agent process is connected to the relay.
-
-If the terminal closes, machine sleeps, or process exits, the relay marks the device offline.
-
-## Planned Commands
-
-Future versions may include:
+## Supported Commands
 
 ```bash
 remote-cli service install
+remote-cli service uninstall
 remote-cli service start
 remote-cli service stop
-remote-cli service status
-remote-cli logs
+remote-cli service logs
 ```
 
-## Linux: systemd User Service Example
+Service management currently supports:
 
-This is a manual example for advanced users.
+- macOS via launchd
+- Linux via systemd user services
 
-Create:
+There is no `remote-cli service status` command yet. Use service logs and the PWA device status for now.
+
+## Install
+
+```bash
+remote-cli service install
+```
+
+This writes a service file for the current user and starts the agent.
+
+The command uses the current `remote-cli` executable path, so install the binary in its final location before installing the service.
+
+## Logs
+
+```bash
+remote-cli service logs
+```
+
+On Linux, this follows the systemd user journal. On macOS, this follows:
 
 ```text
-~/.config/systemd/user/remote-cli-agent.service
+~/Library/Logs/remote-cli.log
 ```
 
-Example unit:
-
-```ini
-[Unit]
-Description=remote-cli agent
-After=network-online.target
-
-[Service]
-ExecStart=%h/.local/bin/remote-cli run
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=default.target
-```
-
-Enable:
+## Start And Stop
 
 ```bash
-systemctl --user daemon-reload
-systemctl --user enable --now remote-cli-agent
+remote-cli service stop
+remote-cli service start
 ```
 
-Logs:
+Stopping the service makes the device go offline in the PWA. Starting it reconnects the agent.
+
+## Uninstall
 
 ```bash
-journalctl --user -u remote-cli-agent -f
+remote-cli service uninstall
 ```
 
-## macOS: launchd Notes
+This stops and removes the service file. It does not unpair the device.
 
-launchd support is not documented as a supported install path yet.
+## Linux Details
 
-For now, run:
+The generated service path is:
 
-```bash
+```text
+~/.config/systemd/user/remote-cli.service
+```
+
+The service runs:
+
+```text
 remote-cli run
 ```
 
-in a terminal, or use your own launchd plist if you are comfortable debugging it.
+Equivalent manual commands:
 
-## Public Alpha Position
+```bash
+systemctl --user start remote-cli
+systemctl --user stop remote-cli
+journalctl --user -u remote-cli -f --no-pager
+```
 
-Public alpha docs should be honest:
+## macOS Details
 
-- pairing does not install a service
-- `remote-cli run` must stay running
-- service helpers are planned but not ready
+The generated launchd plist path is:
+
+```text
+~/Library/LaunchAgents/com.remote-cli.agent.plist
+```
+
+The service writes stdout and stderr to:
+
+```text
+~/Library/Logs/remote-cli.log
+```
+
+Equivalent manual commands:
+
+```bash
+launchctl start com.remote-cli.agent
+launchctl stop com.remote-cli.agent
+tail -f ~/Library/Logs/remote-cli.log
+```
+
+## Common Issues
+
+If the service starts but the device stays offline:
+
+- run `remote-cli status` and confirm the agent is paired
+- confirm the stored relay URL is reachable from that machine
+- confirm Claude Code works with `claude --print "Reply with OK"`
+- check `remote-cli service logs`
+
+If the binary was moved after service installation, reinstall the service:
+
+```bash
+remote-cli service uninstall
+remote-cli service install
+```

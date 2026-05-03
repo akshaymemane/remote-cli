@@ -157,6 +157,21 @@ export function ChatView({
   );
 }
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+  return (
+    <button className="copy-btn" onClick={copy} title="Copy">
+      {copied ? '✓' : '⧉'}
+    </button>
+  );
+}
+
 function MessageBubble({ msg }: { msg: ChatMessage }) {
   if (msg.role === 'tool') return <ToolCard msg={msg} />;
 
@@ -169,10 +184,17 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   }
 
   return (
-    <div className="bubble assistant md">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-        {msg.text}
-      </ReactMarkdown>
+    <div className="bubble-outer">
+      <div className="bubble assistant md">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+          {msg.text}
+        </ReactMarkdown>
+      </div>
+      {msg.text && (
+        <div className="bubble-actions">
+          <CopyButton text={msg.text} />
+        </div>
+      )}
     </div>
   );
 }
@@ -211,7 +233,13 @@ function ToolCard({ msg }: { msg: ChatMessage }) {
             <pre className="tool-input">{JSON.stringify(msg.toolInput, null, 2)}</pre>
           )}
           {msg.toolResult !== undefined && (
-            <pre className="tool-result">{msg.toolResult}</pre>
+            <>
+              <div className="tool-result-header">
+                <span className="tool-result-label">output</span>
+                <CopyButton text={msg.toolResult} />
+              </div>
+              <pre className="tool-result">{msg.toolResult}</pre>
+            </>
           )}
         </div>
       )}

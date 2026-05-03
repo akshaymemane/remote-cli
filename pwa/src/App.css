@@ -250,6 +250,39 @@ input:focus { border-color: var(--accent); }
   font-size: 12px;
 }
 
+/* Copy button */
+.bubble-outer {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  max-width: 88%;
+  gap: 1px;
+}
+.bubble-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 4px;
+}
+.copy-btn {
+  background: none;
+  color: var(--text2);
+  padding: 2px 8px;
+  font-size: 14px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.copy-btn:hover { color: var(--text); }
+
+.tool-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px 0;
+  border-top: 1px solid var(--border);
+}
+.tool-result-label { font-size: 11px; color: var(--text2); }
+.tool-result-header .copy-btn { font-size: 13px; padding: 2px 6px; }
+
 /* Thinking indicator */
 .bubble.thinking {
   display: flex;
@@ -330,7 +363,7 @@ input:focus { border-color: var(--accent); }
   max-height: 200px;
   color: var(--text2);
 }
-.tool-result { border-top: 1px solid var(--border); color: var(--text); }
+.tool-result { color: var(--text); }
 
 /* Input bar */
 .input-bar {

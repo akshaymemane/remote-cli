@@ -27,20 +27,19 @@ func main() {
 			}
 		}
 		if relayURL == "" {
-			fmt.Fprintln(os.Stderr, "usage: remote-cli pair --relay <relay-url> [--run]")
+			fmt.Fprintln(os.Stderr, "usage: remote-cli pair --relay <relay-url>")
 			os.Exit(1)
 		}
 		if err := agent.Pair(relayURL); err != nil {
 			log.Fatal(err)
 		}
-		if hasFlag(os.Args[2:], "--run") {
-			cfg, err := agent.LoadConfig()
-			if err != nil {
-				log.Fatalf("load config: %v", err)
-			}
-			if err := agent.Run(cfg); err != nil {
-				log.Fatal(err)
-			}
+		cfg, err := agent.LoadConfig()
+		if err != nil {
+			log.Fatalf("load config: %v", err)
+		}
+		fmt.Println("Starting agent… (Ctrl+C to stop — use 'remote-cli service install' for background autostart)")
+		if err := agent.Run(cfg); err != nil {
+			log.Fatal(err)
 		}
 
 	case "run":
@@ -112,20 +111,11 @@ func flagValue(args []string, flags ...string) string {
 	return ""
 }
 
-func hasFlag(args []string, flag string) bool {
-	for _, arg := range args {
-		if arg == flag {
-			return true
-		}
-	}
-	return false
-}
-
 func usage() {
 	fmt.Fprintf(os.Stderr, `remote-cli %s
 
 Commands:
-  pair   --relay <url> [--run] Pair this machine with the relay (shows QR code); --run starts agent immediately after
+  pair   --relay <url>         Pair this machine and start the agent (shows QR code)
   run                          Start the agent and connect to the relay
   status                       Show pairing status and config path
   unpair                       Remove pairing config from this machine

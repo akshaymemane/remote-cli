@@ -18,8 +18,8 @@ go run ./cmd/relay                     # first run prompts for admin password
 RELAY_ADDR=:9090 go run ./cmd/relay    # custom port
 
 # Agent
-go run ./cmd/agent pair --relay <url>  # pair this machine
-go run ./cmd/agent run                 # start agent loop
+go run ./cmd/agent pair --relay <url>  # pair this machine and start agent immediately
+go run ./cmd/agent run                 # start agent (already-paired machine)
 go run ./cmd/agent status              # show config
 go run ./cmd/agent unpair              # remove config
 

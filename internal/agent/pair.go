@@ -93,7 +93,6 @@ func Pair(relayURL string) error {
 	}
 
 	fmt.Printf("Paired as %q\n", complete.DeviceName)
-	fmt.Println("Run 'remote-cli run' to start the agent.")
 	return nil
 }
 

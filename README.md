@@ -100,23 +100,12 @@ On every machine you want to control:
 remote-cli pair --relay http://YOUR_RELAY_URL
 ```
 
-Scan the QR code from the PWA or enter the 6-digit pairing code manually.
+Scan the QR code from the PWA or enter the 6-digit pairing code manually. The agent starts automatically once pairing completes — the device goes online immediately.
 
-### 4. Run the agent
-
-Pairing saves credentials; it does not keep the agent online.
-
-After pairing, run:
+**For background autostart** (survives reboots, no terminal needed):
 
 ```bash
-remote-cli run
-```
-
-Keep that process running. The device should appear online in the PWA.
-
-For background startup on macOS or Linux:
-
-```bash
+# Ctrl+C the agent started by pair, then:
 remote-cli service install
 remote-cli service logs
 ```

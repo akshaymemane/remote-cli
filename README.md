@@ -120,6 +120,8 @@ See [docs/service-autostart.md](docs/service-autostart.md).
 
 ## Documentation
 
+Docs website: <https://akshaymemane.github.io/remote-cli/>
+
 - [Quickstart](docs/quickstart.md)
 - [Choosing Your Relay URL](docs/choosing-relay-url.md)
 - [Relay Deployment](docs/relay-deployment.md)
@@ -154,6 +156,14 @@ PWA dev server:
 cd pwa
 npm install
 VITE_RELAY_URL=http://localhost:8080 npm run dev
+```
+
+Docs website:
+
+```bash
+cd docs
+npm install
+npm run dev
 ```
 
 Full stack with relay serving built PWA:

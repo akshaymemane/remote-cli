@@ -81,7 +81,7 @@ Use TLS for public deployments.
 
 Caddy example:
 
-```caddy
+```text
 relay.example.com {
     reverse_proxy localhost:8080
 }

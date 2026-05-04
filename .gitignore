@@ -11,6 +11,12 @@
 /pwa/node_modules/.tmp/
 *.tsbuildinfo
 
+# Generated docs site
+/docs/.vitepress/dist/
+/docs/.vitepress/cache/
+/docs/.vitepress/.temp/
+/docs/node_modules/
+
 # Local databases
 /relay.db
 *.db

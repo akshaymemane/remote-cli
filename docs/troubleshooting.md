@@ -202,7 +202,7 @@ location / {
 
 Caddy usually handles this automatically:
 
-```caddy
+```text
 relay.example.com {
     reverse_proxy localhost:8080
 }

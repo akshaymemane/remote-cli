@@ -103,7 +103,7 @@ Put the relay behind a reverse proxy with TLS.
 
 Caddy example:
 
-```caddy
+```text
 relay.example.com {
     reverse_proxy localhost:8080
 }

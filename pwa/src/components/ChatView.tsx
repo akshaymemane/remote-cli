@@ -70,6 +70,11 @@ export function ChatView({
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, thinking, atBottom]);
 
+  // Always scroll to bottom when an approval card appears so buttons are visible.
+  useEffect(() => {
+    if (messages.some(m => m.awaitingApproval)) scrollToBottom();
+  }, [messages]);
+
   function handleScroll() {
     const el = messagesRef.current;
     if (!el) return;
@@ -211,17 +216,18 @@ function ToolCard({ msg, onApprove, onDeny }: {
   onApprove: (id: string) => void;
   onDeny: (id: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  // Start collapsed; expand only when approval is needed.
+  const [expanded, setExpanded] = useState(() => msg.awaitingApproval ?? false);
   const prevPending = useRef(msg.pending);
-
-  // Auto-collapse when tool finishes (unless user already toggled).
   const userToggled = useRef(false);
+
   useEffect(() => {
-    if (prevPending.current && !msg.pending && !userToggled.current) {
-      setExpanded(false);
-    }
+    // Expand when approval arrives (unless user already toggled manually).
+    if (msg.awaitingApproval && !userToggled.current) setExpanded(true);
+    // Collapse when tool finishes.
+    if (prevPending.current && !msg.pending && !userToggled.current) setExpanded(false);
     prevPending.current = msg.pending;
-  }, [msg.pending]);
+  }, [msg.pending, msg.awaitingApproval]);
 
   function toggle() {
     userToggled.current = true;

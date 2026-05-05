@@ -112,7 +112,6 @@ func (s *claudeSession) run() {
 	}
 
 	args := []string{
-		"--print",
 		"--input-format", "stream-json",
 		"--output-format", "stream-json",
 		"--verbose",

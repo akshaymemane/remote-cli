@@ -62,7 +62,7 @@ Commands:
 
 ```bash
 remote-cli pair --relay <url>
-remote-cli pair --relay <url> --run
+remote-cli pair --relay <url>
 remote-cli run
 remote-cli status
 remote-cli unpair
@@ -159,17 +159,40 @@ When the PWA sends a user message, it includes only `session_id`. The relay uses
 The agent starts:
 
 ```bash
-claude --print \
+claude \
   --input-format stream-json \
   --output-format stream-json \
   --verbose \
   --include-partial-messages \
-  --no-session-persistence
+  --no-session-persistence \
+  --permission-prompt-tool mcp__approval__request_permission \
+  --mcp-config /tmp/remote-cli-mcp-<session-id>.json
 ```
 
 Claude emits JSON lines. The agent parses those lines and converts them to remote-cli protocol messages.
 
 For partial assistant messages, Claude emits cumulative text. The agent tracks the previous text per message ID and forwards only the new delta.
+
+## Tool Approval
+
+When Claude wants to run a tool it requires permission for, it calls the `request_permission` MCP tool instead of prompting the terminal.
+
+The MCP server is a subprocess of the agent binary (`remote-cli mcp-server --socket <path>`). It connects to a Unix socket (the permission bridge) running inside the agent.
+
+Flow:
+
+```text
+Claude -> MCP server subprocess: tools/call request_permission
+MCP server -> Unix socket (bridge): bridgeRequest{tool_use_id, tool_name, tool_input}
+Bridge -> Relay -> PWA: tool_use.request(awaiting_approval=true)
+PWA: show Allow / Deny buttons
+User taps Allow  -> PWA -> Relay -> Agent: tool_use.approve
+User taps Deny   -> PWA -> Relay -> Agent: tool_use.deny
+Bridge -> MCP server: bridgeResponse{allow: true/false}
+MCP server -> Claude: {"behavior":"allow"} or {"behavior":"deny","message":"..."}
+```
+
+If the bridge fails to start (e.g. socket error), the session falls back to auto-approval.
 
 ## Disconnects
 
@@ -195,5 +218,4 @@ Relay restart:
 - No persisted chat history.
 - No end-to-end encryption.
 - One active session per agent.
-- Phone-side tool approval is not a supported permission boundary yet.
 - No `remote-cli service status` command yet.

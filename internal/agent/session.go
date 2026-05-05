@@ -141,9 +141,13 @@ type session interface {
 	deliver(content string)
 	end(reason string)
 	sessionID() string
+	approveTool(toolUseID string)
+	denyTool(toolUseID, reason string)
 }
 
-func (s *echoSession) sessionID() string { return s.id }
+func (s *echoSession) sessionID() string             { return s.id }
+func (s *echoSession) approveTool(_ string)          {}
+func (s *echoSession) denyTool(_, _ string)          {}
 
 // ── Session manager ───────────────────────────────────────────────────────────
 
@@ -190,6 +194,24 @@ func (m *sessionMgr) end(sessionID, reason string) {
 	if s != nil {
 		log.Printf("session end: %s (%s)", sessionID, reason)
 		s.end(reason)
+	}
+}
+
+func (m *sessionMgr) approveTool(sessionID, toolUseID string) {
+	m.mu.Lock()
+	s := m.current
+	m.mu.Unlock()
+	if s != nil && s.sessionID() == sessionID {
+		s.approveTool(toolUseID)
+	}
+}
+
+func (m *sessionMgr) denyTool(sessionID, toolUseID, reason string) {
+	m.mu.Lock()
+	s := m.current
+	m.mu.Unlock()
+	if s != nil && s.sessionID() == sessionID {
+		s.denyTool(toolUseID, reason)
 	}
 }
 

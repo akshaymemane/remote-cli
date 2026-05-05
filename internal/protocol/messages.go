@@ -144,11 +144,12 @@ type AssistantChunkMsg struct {
 // ── Tool use ──────────────────────────────────────────────────────────────────
 
 type ToolUseRequestMsg struct {
-	Type      MessageType    `json:"type"`
-	SessionID string         `json:"session_id"`
-	ToolUseID string         `json:"tool_use_id"`
-	ToolName  string         `json:"tool_name"`
-	ToolInput map[string]any `json:"tool_input"`
+	Type             MessageType    `json:"type"`
+	SessionID        string         `json:"session_id"`
+	ToolUseID        string         `json:"tool_use_id"`
+	ToolName         string         `json:"tool_name"`
+	ToolInput        map[string]any `json:"tool_input"`
+	AwaitingApproval bool           `json:"awaiting_approval,omitempty"`
 }
 
 type ToolUseApproveMsg struct {

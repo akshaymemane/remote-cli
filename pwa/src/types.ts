@@ -12,7 +12,8 @@ export interface ChatMessage {
   toolName?: string;
   toolInput?: Record<string, unknown>;
   toolResult?: string;
-  pending?: boolean; // tool awaiting result
+  pending?: boolean;          // tool is running (no result yet)
+  awaitingApproval?: boolean; // tool needs phone-side approve/deny before running
 }
 
 export interface RelayMsg {

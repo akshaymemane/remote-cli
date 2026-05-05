@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -20,10 +22,11 @@ import (
 type claudeSession struct {
 	id      string
 	send    chan<- []byte
-	msgCh   chan string    // incoming user messages
-	stop    chan struct{}  // close to request shutdown
-	stopped chan struct{}  // closed when goroutine exits
+	msgCh   chan string   // incoming user messages
+	stop    chan struct{} // close to request shutdown
+	stopped chan struct{} // closed when goroutine exits
 	once    sync.Once
+	bridge  *permissionBridge // nil if permission bridge failed to start
 }
 
 func newClaudeSession(id string, send chan<- []byte) *claudeSession {
@@ -52,6 +55,18 @@ func (s *claudeSession) sessionID() string { return s.id }
 func (s *claudeSession) end(_ string) {
 	s.once.Do(func() { close(s.stop) })
 	<-s.stopped
+}
+
+func (s *claudeSession) approveTool(toolUseID string) {
+	if s.bridge != nil {
+		s.bridge.resolve(toolUseID, true, "")
+	}
+}
+
+func (s *claudeSession) denyTool(toolUseID, reason string) {
+	if s.bridge != nil {
+		s.bridge.resolve(toolUseID, false, reason)
+	}
 }
 
 func (s *claudeSession) push(msg any) {
@@ -85,14 +100,43 @@ func (s *claudeSession) run() {
 		})
 	}()
 
-	cmd := exec.Command("claude",
+	// Set up the permission bridge so the phone can approve/deny tool calls.
+	// If it fails we fall back to auto-approval (claude runs without the flag).
+	socketPath := filepath.Join(os.TempDir(), "remote-cli-perm-"+s.id+".sock")
+	mcpConfigPath := filepath.Join(os.TempDir(), "remote-cli-mcp-"+s.id+".json")
+	bridge, bridgeErr := newPermissionBridge(socketPath, s.id, s.send)
+	if bridgeErr != nil {
+		log.Printf("session %s: permission bridge unavailable (%v) — tools auto-approve", s.id, bridgeErr)
+	} else {
+		s.bridge = bridge
+	}
+
+	args := []string{
 		"--print",
 		"--input-format", "stream-json",
 		"--output-format", "stream-json",
 		"--verbose",
 		"--include-partial-messages",
 		"--no-session-persistence",
-	)
+	}
+	if s.bridge != nil {
+		selfPath, exeErr := os.Executable()
+		if exeErr == nil {
+			mcpCfg := fmt.Sprintf(
+				`{"mcpServers":{"approval":{"command":%q,"args":["mcp-server","--socket",%q]}}}`,
+				selfPath, socketPath,
+			)
+			if writeErr := os.WriteFile(mcpConfigPath, []byte(mcpCfg), 0600); writeErr == nil {
+				args = append(args,
+					"--permission-prompt-tool", "mcp__approval__request_permission",
+					"--mcp-config", mcpConfigPath,
+				)
+				log.Printf("session %s: phone-side tool approval enabled", s.id)
+			}
+		}
+	}
+
+	cmd := exec.Command("claude", args...)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -120,6 +164,10 @@ func (s *claudeSession) run() {
 		stdin.Close()
 		cmd.Process.Kill()
 		cmd.Wait() //nolint — exit code irrelevant
+		if s.bridge != nil {
+			s.bridge.close()
+		}
+		os.Remove(mcpConfigPath)
 	}()
 
 	log.Printf("session %s: claude pid %d started", s.id, cmd.Process.Pid)

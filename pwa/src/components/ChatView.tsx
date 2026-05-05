@@ -48,12 +48,15 @@ interface Props {
   messages: ChatMessage[];
   thinking: boolean;
   onSend: (text: string) => void;
+  onApproveTool: (id: string) => void;
+  onDenyTool: (id: string) => void;
   onBack: () => void;
   onEndSession: () => void;
 }
 
 export function ChatView({
-  device, sessionId, wsConnected, messages, thinking, onSend, onBack, onEndSession,
+  device, sessionId, wsConnected, messages, thinking, onSend,
+  onApproveTool, onDenyTool, onBack, onEndSession,
 }: Props) {
   const [input, setInput] = useState('');
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -124,7 +127,7 @@ export function ChatView({
           </div>
         )}
         {messages.map(msg => (
-          <MessageBubble key={msg.id} msg={msg} />
+          <MessageBubble key={msg.id} msg={msg} onApprove={onApproveTool} onDeny={onDenyTool} />
         ))}
         {thinking && (
           <div className="bubble assistant thinking">
@@ -172,8 +175,12 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function MessageBubble({ msg }: { msg: ChatMessage }) {
-  if (msg.role === 'tool') return <ToolCard msg={msg} />;
+function MessageBubble({ msg, onApprove, onDeny }: {
+  msg: ChatMessage;
+  onApprove: (id: string) => void;
+  onDeny: (id: string) => void;
+}) {
+  if (msg.role === 'tool') return <ToolCard msg={msg} onApprove={onApprove} onDeny={onDeny} />;
 
   if (msg.role === 'user') {
     return (
@@ -199,7 +206,11 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
-function ToolCard({ msg }: { msg: ChatMessage }) {
+function ToolCard({ msg, onApprove, onDeny }: {
+  msg: ChatMessage;
+  onApprove: (id: string) => void;
+  onDeny: (id: string) => void;
+}) {
   const [expanded, setExpanded] = useState(true);
   const prevPending = useRef(msg.pending);
 
@@ -221,7 +232,9 @@ function ToolCard({ msg }: { msg: ChatMessage }) {
     <div className="tool-card">
       <button className="tool-header" onClick={toggle}>
         <span className="tool-name">⚙ {msg.toolName}</span>
-        {msg.pending
+        {msg.awaitingApproval
+          ? <span className="tool-status approval">approval needed</span>
+          : msg.pending
           ? <span className="tool-status running">running</span>
           : <span className="tool-status done">done</span>
         }
@@ -231,6 +244,12 @@ function ToolCard({ msg }: { msg: ChatMessage }) {
         <div className="tool-body">
           {msg.toolInput && (
             <pre className="tool-input">{JSON.stringify(msg.toolInput, null, 2)}</pre>
+          )}
+          {msg.awaitingApproval && (
+            <div className="tool-approval">
+              <button className="approve-btn" onClick={() => onApprove(msg.id)}>✓ Allow</button>
+              <button className="deny-btn" onClick={() => onDeny(msg.id)}>✕ Deny</button>
+            </div>
           )}
           {msg.toolResult !== undefined && (
             <>

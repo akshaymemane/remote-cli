@@ -95,6 +95,8 @@ export default function App() {
           messages={relay.messages}
           thinking={relay.thinking}
           onSend={relay.sendMessage}
+          onApproveTool={relay.approveTool}
+          onDenyTool={relay.denyTool}
           onBack={handleBack}
           onEndSession={handleBack}
         />

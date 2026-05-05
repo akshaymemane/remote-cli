@@ -91,6 +91,16 @@ func main() {
 			log.Fatal(err)
 		}
 
+	case "mcp-server":
+		socketPath := flagValue(os.Args[2:], "--socket")
+		if socketPath == "" {
+			fmt.Fprintln(os.Stderr, "usage: remote-cli mcp-server --socket <path>")
+			os.Exit(1)
+		}
+		if err := agent.RunMCPPermissionServer(socketPath); err != nil {
+			log.Fatal(err)
+		}
+
 	case "version", "--version", "-v":
 		fmt.Println(version)
 

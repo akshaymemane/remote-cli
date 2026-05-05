@@ -131,6 +131,20 @@ func handleRelayMsg(mgr *sessionMgr, raw []byte) {
 			mgr.deliver(msg.SessionID, msg.Content)
 		}
 
+	case protocol.TypeToolUseApprove:
+		var msg protocol.ToolUseApproveMsg
+		if json.Unmarshal(raw, &msg) == nil && msg.ToolUseID != "" {
+			log.Printf("tool_use.approve tool_use_id=%s session=%s", msg.ToolUseID, msg.SessionID)
+			mgr.approveTool(msg.SessionID, msg.ToolUseID)
+		}
+
+	case protocol.TypeToolUseDeny:
+		var msg protocol.ToolUseDenyMsg
+		if json.Unmarshal(raw, &msg) == nil && msg.ToolUseID != "" {
+			log.Printf("tool_use.deny tool_use_id=%s session=%s reason=%q", msg.ToolUseID, msg.SessionID, msg.Reason)
+			mgr.denyTool(msg.SessionID, msg.ToolUseID, msg.Reason)
+		}
+
 	default:
 		log.Printf("relay → agent: %s", env.Type)
 	}

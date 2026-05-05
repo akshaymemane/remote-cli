@@ -99,19 +99,30 @@ export function useRelay(token: string | null) {
         break;
       }
       case 'tool_use.request': {
-        const m = cast<{ tool_use_id: string; tool_name: string; tool_input: Record<string, unknown> }>(msg);
+        const m = cast<{ tool_use_id: string; tool_name: string; tool_input: Record<string, unknown>; awaiting_approval?: boolean }>(msg);
         streamingIdRef.current = null;
-        setMessages(prev => [
-          ...prev,
-          {
-            id: m.tool_use_id,
-            role: 'tool' as const,
-            text: '',
-            toolName: m.tool_name,
-            toolInput: m.tool_input,
-            pending: true,
-          },
-        ]);
+        setMessages(prev => {
+          // If a card already exists (approval card → now running), update it.
+          if (prev.some(item => item.id === m.tool_use_id)) {
+            return prev.map(item =>
+              item.id === m.tool_use_id
+                ? { ...item, awaitingApproval: m.awaiting_approval ?? false, pending: true }
+                : item
+            );
+          }
+          return [
+            ...prev,
+            {
+              id: m.tool_use_id,
+              role: 'tool' as const,
+              text: '',
+              toolName: m.tool_name,
+              toolInput: m.tool_input,
+              pending: true,
+              awaitingApproval: m.awaiting_approval ?? false,
+            },
+          ];
+        });
         break;
       }
       case 'tool_use.result': {
@@ -200,8 +211,22 @@ export function useRelay(token: string | null) {
     send({ type: 'message.user', session_id: sessionId, content });
   }, [send, sessionId]);
 
+  const approveTool = useCallback((toolUseId: string) => {
+    send({ type: 'tool_use.approve', tool_use_id: toolUseId });
+    setMessages(prev => prev.map(m =>
+      m.id === toolUseId ? { ...m, awaitingApproval: false } : m
+    ));
+  }, [send]);
+
+  const denyTool = useCallback((toolUseId: string) => {
+    send({ type: 'tool_use.deny', tool_use_id: toolUseId, reason: 'user denied' });
+    setMessages(prev => prev.map(m =>
+      m.id === toolUseId ? { ...m, awaitingApproval: false, pending: false, toolResult: 'Denied by user' } : m
+    ));
+  }, [send]);
+
   return {
     wsStatus, devices, activeDeviceId, sessionId, messages, thinking,
-    startSession, endSession, sendMessage, send,
+    startSession, endSession, sendMessage, approveTool, denyTool, send,
   };
 }
